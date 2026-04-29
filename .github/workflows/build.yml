@@ -14,28 +14,26 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake protobuf-compiler \
+        sudo apt-get install -y build-essential meson ninja-build protobuf-compiler \
             libprotobuf-dev libboost-all-dev libopenblas-dev libblas-dev \
             libasio-dev upx
 
     - name: Create build directory
       run: mkdir -p build
 
-    - name: Configure CMake (size optimized)
+    - name: Configure Meson (size optimized)
       run: |
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Os -s" ..
+        meson setup build --buildtype=release -Db_lto=true -Db_vscrt=md
 
-    - name: Build with Make
+    - name: Build with Ninja
       run: |
         cd build
-        make -j$(nproc)
+        meson compile
 
     - name: Strip and compress binary
       run: |
-        cd build
-        strip lc0
-        upx --best lc0 || true
+        strip build/lc0
+        upx --best build/lc0 || true
 
     - name: Get file size
       run: ls -lh build/lc0
